@@ -9,7 +9,6 @@
       --bg: #fff5f8;
       --primary: #e63973;
       --secondary: #1c2533;
-      --grid-size: 60px;
       --grid-font: 1.4rem;
     }
     * {
@@ -45,28 +44,30 @@
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(8, var(--grid-size));
-      grid-template-rows: repeat(8, var(--grid-size));
+      grid-template-columns: repeat(8, 1fr);
       gap: 4px;
       border: 4px solid var(--primary);
       padding: 4px;
       border-radius: 1rem;
       background: #fff;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+      width: 100%;
+      max-width: 480px;
+      aspect-ratio: 1 / 1;
     }
     .cell {
-      width: var(--grid-size);
-      height: var(--grid-size);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: var(--grid-font);
+      font-size: clamp(1rem, 4vw, 1.5rem);
       font-weight: 700;
       color: var(--secondary);
       border: 2px solid transparent;
       border-radius: 6px;
       transition: background 0.2s, border 0.2s;
       cursor: pointer;
+      background: #fff;
+      aspect-ratio: 1 / 1;
     }
     .cell.selected {
       background: var(--primary);
@@ -90,7 +91,7 @@
       100% {background-position: 640px 640px;}
     }
     .message {
-      font-size: 1.6rem;
+      font-size: 1.3rem;
       font-weight: 600;
       color: var(--secondary);
       text-align: center;
@@ -101,11 +102,12 @@
 <body>
   <div class="heart-bg"></div>
   <h1>Dica: Segundo encontro 💌</h1>
-  <div class="timer"><span aria-label="bomba" role="img">💣</span> <span id="time">01:00</span></div>
+  <div class="timer"><span aria-label="bomba" role="img">💣</span> <span id="time">00:25</span></div>
 
   <div id="grid" class="grid"></div>
-
   <div id="message" class="message"></div>
+
+  <audio id="bg-music" src="night-trains.mp3" loop></audio>
 
   <script>
     const GRID_SIZE = 8;
@@ -113,11 +115,18 @@
     const gridEl = document.getElementById("grid");
     const timeEl = document.getElementById("time");
     const messageEl = document.getElementById("message");
+    const music = document.getElementById("bg-music");
+    music.volume = 0.8;
 
-    // Utility: random uppercase letter
+    let musicStarted = false;
+    window.addEventListener("click", () => {
+      if (!musicStarted) {
+        music.play().catch(() => {});
+        musicStarted = true;
+      }
+    });
+
     const randLetter = () => String.fromCharCode(65 + Math.floor(Math.random() * 26));
-
-    // Build empty grid
     const cells = [];
     for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
       const div = document.createElement("div");
@@ -126,57 +135,44 @@
       gridEl.appendChild(div);
       cells.push(div);
     }
-
-    // Place WORD horizontally starting at random row/col where fits
     const row = Math.floor(Math.random() * GRID_SIZE);
     const colStart = Math.floor(Math.random() * (GRID_SIZE - WORD.length + 1));
     for (let j = 0; j < WORD.length; j++) {
       const idx = row * GRID_SIZE + colStart + j;
       cells[idx].textContent = WORD[j];
-      cells[idx].dataset.word = "true"; // mark part of word
+      cells[idx].dataset.word = "true";
     }
-
-    // Fill remaining cells
     cells.forEach(cell => {
       if (!cell.textContent) cell.textContent = randLetter();
     });
-
-    // Selection logic
     let selection = [];
-
     const resetSelection = () => {
       selection.forEach(c => c.classList.remove("selected"));
       selection = [];
     };
-
     const checkSelection = () => {
       const letters = selection.map(c => c.textContent).join("");
       if (letters === WORD) {
         selection.forEach(c => c.classList.add("found"));
         stopTimer();
-        messageEl.textContent = "\u2764\uFE0F Você encontrou CINEMA! Vá até o local onde vocês costumam ver filmes juntos";
+        messageEl.textContent = "\u2764\uFE0F Você encontrou CINEMA! Nosso segundo encontro continua...";
         gridEl.style.pointerEvents = "none";
+        music.pause();
       }
     };
-
     cells.forEach(cell => {
       cell.addEventListener("click", () => {
-        // if already finished, ignore
         if (gridEl.style.pointerEvents === "none") return;
-
-        // allow selecting only contiguous horizontally in same row
         const idx = parseInt(cell.dataset.index, 10);
         const last = selection[selection.length - 1];
         if (selection.length === 0) {
           selection.push(cell);
           cell.classList.add("selected");
         } else if (selection.includes(cell)) {
-          // deselect trailing cells if clicking again
           const pos = selection.indexOf(cell);
           selection.slice(pos).forEach(c => c.classList.remove("selected"));
           selection = selection.slice(0, pos);
         } else {
-          // Only proceed if adjacent to last on the right in same row
           if (idx === parseInt(last.dataset.index) + 1 && Math.floor(idx / GRID_SIZE) === Math.floor(parseInt(last.dataset.index)/GRID_SIZE)) {
             selection.push(cell);
             cell.classList.add("selected");
@@ -187,9 +183,7 @@
         }
       });
     });
-
-    // Timer
-    let remaining = 60; // seconds
+    let remaining = 25;
     const tick = () => {
       remaining--;
       const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
@@ -199,6 +193,7 @@
         clearInterval(timerId);
         messageEl.textContent = "Tempo esgotado! Mas ainda te levo ao CINEMA ❤️";
         gridEl.style.pointerEvents = "none";
+        music.pause();
       }
     };
     const timerId = setInterval(tick, 1000);
