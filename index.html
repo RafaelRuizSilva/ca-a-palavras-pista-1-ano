@@ -102,7 +102,7 @@
 <body>
   <div class="heart-bg"></div>
   <h1>Dica: Segundo encontro 💌</h1>
-  <div class="timer"><span aria-label="bomba" role="img">💣</span> <span id="time">00:25</span></div>
+  <div class="timer"><span aria-label="bomba" role="img">💣</span> <span id="time">00:10</span></div>
 
   <div id="grid" class="grid"></div>
   <div id="message" class="message"></div>
@@ -155,7 +155,7 @@
       if (letters === WORD) {
         selection.forEach(c => c.classList.add("found"));
         stopTimer();
-        messageEl.textContent = "\u2764\uFE0F Você encontrou CINEMA! Nosso segundo encontro continua...";
+        messageEl.textContent = "\u2764\uFE0F Você encontrou CINEMA! A próxima pista está no local onde assistimos nossos filmes favoritos";
         gridEl.style.pointerEvents = "none";
         music.pause();
       }
@@ -183,7 +183,7 @@
         }
       });
     });
-    let remaining = 25;
+    let remaining = 10;
     const tick = () => {
       remaining--;
       const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
